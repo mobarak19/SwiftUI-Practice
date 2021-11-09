@@ -11,7 +11,7 @@ struct ContentView: View {
     let columns : [GridItem] = [GridItem(.flexible()),GridItem(.flexible()),GridItem(.flexible())]
     
     @State private var moves: [Move?] = Array(repeating: nil, count: 9)
-    @State private var isHumanTurn = true
+    @State private var isGameBoardDisabled = false
     var body: some View {
         
         GeometryReader{ geometry in
@@ -29,17 +29,45 @@ struct ContentView: View {
                                 .foregroundColor(.white)
 
                         }.onTapGesture {
-                            moves[i] = Move(player: isHumanTurn ? .human: .computer, boardIndex: i)
-                            isHumanTurn.toggle()
+                            if isSqureOcupied(in: moves, forIndex: i){
+                                return
+                            }
+                            moves[i] = Move(player: .human, boardIndex: i)
+                            isGameBoardDisabled = true
+                            //check if win or draw
+                       
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5){
+                                let computerPosition = determineComputerPosition(in: moves)
+                                moves[computerPosition] = Move(player: .computer, boardIndex: computerPosition)
+                                isGameBoardDisabled = false 
+                            }
                         }
                     }
                 }
                 Spacer()
             }.padding()
+            .disabled(isGameBoardDisabled)
             
         }
 
     }
+    
+    
+    
+    func isSqureOcupied(in moves:[Move?],forIndex:Int) -> Bool {
+        return moves.contains(where: {$0?.boardIndex==forIndex})
+    }
+    
+    func determineComputerPosition(in moves:[Move?]) -> Int {
+        var movePosition = Int.random(in: 0..<9)
+        while isSqureOcupied(in: moves, forIndex: movePosition) {
+            movePosition = Int.random(in: 0..<9)
+        }
+        return movePosition
+    }
+    
+    
 }
 
 enum Player {
